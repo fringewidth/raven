@@ -1,53 +1,8 @@
-import pandas as pd
-import numpy as np
 from itertools import combinations
+import numpy as np
 import networkx as nx
 
-def minmax(x: float, new_min: float, new_max: float, old_min: float, old_max: float) -> float:
-    """
-        Applies min-max normalisation
-
-        Args:
-            x (float): The value to be normalised
-            new_min (float): The minimum value of the new range
-            new_max (float): The maximum value of the new range
-            old_min (float): The minimum value of the old range
-            old_max (float): The maximum value of the old range
-        
-        Returns:
-            x (float): The normalised value
-    """
-
-    return (x - old_min) * (new_max - new_min) / (old_max - old_min) + new_min
-
-
-def make_graph(r_squared: np.ndarray, tau: float) -> nx.Graph:
-    """
-    Creates a graph from the R^2 matrix.
-    
-    Args:
-        r_squared (np.ndarray): The R^2 matrix.
-        tau (float): The threshold of correlation for an edge to be present between two features.
-
-    Returns:
-        G (nx.Graph): The correlation graph
-
-    Raises:
-        ValueError: If r_squared is not a square matrix.
-    """
-    if r_squared.shape[0] != r_squared.shape[1]:
-        raise ValueError("r_squared must be a square matrix")
-    
-    G = nx.Graph()
-    for i in range(r_squared.shape[0]):
-        for j in range(r_squared.shape[1]):
-            if r_squared[i, j] > tau:
-                G.add_edge(i, j, weight=minmax(r_squared[i, j], 0.5, 1, tau, 1))
-    
-    return G
-
-
-def raven(df: pd.DataFrame, tau: float = 0.95, sample_size: int = 100) -> list:
+def raven(df, sample_size=100, tau=0.95):
     """
     Implements the Raven algorithm that identifies redundant features in a dataset.
 
@@ -57,7 +12,7 @@ def raven(df: pd.DataFrame, tau: float = 0.95, sample_size: int = 100) -> list:
         sample_size (int): The number of samples to use for the calculation. Default is 100.
     
     Returns:
-        redundant(list): Names of the redundant features.
+        redundant (list): Names of the redundant features.
 
     Raises
         ValueError: If any of the input params are invalid.
@@ -72,47 +27,53 @@ def raven(df: pd.DataFrame, tau: float = 0.95, sample_size: int = 100) -> list:
     if sample_size > len(df):
         raise ValueError("sample_size must be lesser than the number of rows in the DataFrame")
     
-    # Validate DataFrame
-    if len(df.columns) < 2:
-        raise ValueError("DataFrame must have at least 2 columns")
     if not all(df.dtypes == np.number):
         raise ValueError("DataFrame must contain only numeric columns")
     
-    # Convert to numpy array
-    data = df.to_numpy()
-
-    # sample data
-    sample = data[np.random.choice(data.shape[0], sample_size),:]
-
-    # Create pairs
-    pairs = np.array(list(combinations(range(sample.shape[1]), 2)))
-
-    # calculate R^2 for each pair of features
-    r_squared = np.empty((sample.shape[1], sample.shape[1]))
-    for first, second in pairs:
-        cov_mat = np.cov(sample[:, [first, second]], rowvar=False)
-        if all(cov_mat[i, i] != 0 for i in range(2)):
-            r_squared[first, second] = cov_mat[0, 1] ** 2 / (cov_mat[0, 0] * cov_mat[1, 1])
-        else:
-            r_squared[first, second] = 0
+    # Validate DataFrame
+    if len(df.columns) < 2:
+        raise ValueError("DataFrame must have at least 2 columns")
+    sample = df.sample(sample_size).to_numpy()
+    r2_scores = {}
+    col_idx = {col: df.columns.get_loc(col) for col in df.columns}
     
-    # Create graph and extract components
-    G = make_graph(r_squared, tau)
+    # Calculate R-squared values
+    for first, second in combinations(df.columns, 2):
+        first_i = col_idx[first]
+        second_i = col_idx[second]
+        cov = np.cov(sample[:, first_i], sample[:, second_i])
+        r2_scores[first, second] = cov[1, 0]**2 / (cov[1, 1] * cov[0, 0]) if np.all(cov) else 0
 
-    connected_components = list(nx.connected_components(G))
+    def make_graph(scores, tau):
+        """
+        Creates a graph from the R^2 matrix.
+        
+        Args:
+            scores (np.ndarray): The R^2 matrix.
+            tau (float): The threshold of correlation for an edge to be present between two features.
 
-    essential_ind = np.empty((len(connected_components),), dtype=int)
+        Returns:
+            G (nx.Graph): The correlation graph
+        """
+        def get_weight(r2):
+            return (r2 - tau)/(1 - tau) * 0.5 + 0.5
 
-    for i, component in enumerate(connected_components):
-        subgraph = G.subgraph(component)
-        max_degree_node, _ = max(subgraph.degree, key=lambda x: x[1])
-        essential_ind[i] = max_degree_node
-    
-    redundant = [df.columns[i] for i in essential_ind]
+        G = nx.Graph()
+        for (first, second), r2 in scores.items():
+            if r2 >= tau:
+                G.add_edge(first, second, weight=get_weight(r2))
+        return G
+
+    G = make_graph(r2_scores, tau)
+    del sample
+    del r2_scores
+
+    essential = []
+    for comp in list(nx.connected_components(G)):
+        subgraph = G.subgraph(comp)
+        max_degree_node, _ = max(subgraph.degree(), key=lambda item: item[1])
+        essential.append(max_degree_node)
+
+    redundant = [node for node in G.nodes() if node not in essential]
 
     return redundant
-
-
-data = pd.read_csv('train1000.csv').drop(columns=['sample_id', 'Unnamed: 0']).iloc[:, :556]
-
-print(raven(data))
