@@ -1,6 +1,7 @@
 # RAVEN: Reducing Attributes Via Evaluating Nearness [🐦‍⬛](https://en.wikipedia.org/wiki/Backronym)
+![image](https://github.com/user-attachments/assets/e4b39edf-bc2d-480e-9b17-c2cc004f4fea)
 
-A convenient tool to reduce the attributes (features) of that insanely large dataset in a way that doesn't affect dataset quality. It does this by identifying clusters of linearly related (and therefore redundant) features, and only preserving the feature most 'near' to all other features.
+An ultra-fast tool to reduce the attributes (features) of that insanely large dataset in a way that doesn't affect dataset quality. It does this by identifying clusters of linearly related (and therefore redundant) features, and only preserving the feature most 'near' to all other features.
 
 ## Dependencies
 
@@ -27,5 +28,3 @@ redundant_features = raven(really_huge_dataset)
 
 smaller_dataset = really_huge_dataset.drop(columns=redundant_features)
 ```
-
-![Performance metrics](./results.svg)
