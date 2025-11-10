@@ -1,4 +1,4 @@
-# RAVEN: Redundancy Analysis via Elimination Networks [<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Black%20Bird.png" alt="Black Bird" width="35" height="35" />](https://en.wikipedia.org/wiki/Backronym)
+# RAVEN: Redundancy Analysis via Elimination Networks [<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Black%20Bird.png" alt="Black Bird" width="30" height="30" />](https://en.wikipedia.org/wiki/Backronym)
 ![image](https://github.com/user-attachments/assets/e4b39edf-bc2d-480e-9b17-c2cc004f4fea)
 
 An ultra-fast tool to reduce the attributes (features) of that insanely large dataset in a way that doesn't affect dataset quality. It does this by identifying clusters of linearly related (and therefore redundant) features, and only preserving the feature most 'near' to all other features.
