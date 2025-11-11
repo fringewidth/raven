@@ -3,7 +3,7 @@
 
 An ultra-fast tool to reduce the attributes (features) of that insanely large dataset in a way that doesn't affect dataset quality. It does this by identifying clusters of linearly related (and therefore redundant) features, and only preserving the feature most 'near' to all other features.
 
-Tested on huge datasets, and mathematically sound. Read the unfinished draft [here](https://drive.google.com/file/d/1D6dzpmQe6o1U1X3-4uvdHB287tvvCE2a/view).
+Tested on huge datasets, and [mathematically sound](https://hrishik.me/papers/Mathematical-Beauty-Behind-RAVEN.html). Read the unfinished draft [here](https://drive.google.com/file/d/1D6dzpmQe6o1U1X3-4uvdHB287tvvCE2a/view).
 
 ## Dependencies
 
